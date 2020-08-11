@@ -1,4 +1,7 @@
 FROM python:3.7-slim
+RUN apt-get update \
+&& apt-get install gcc -y \
+&& apt-get apt-get clean
 ADD ./ /
 RUN echo '#Main start script\n\
 CONF_FOLDER="./thingsboard_gateway/config"\n\
