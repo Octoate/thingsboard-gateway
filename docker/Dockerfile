@@ -22,6 +22,6 @@ ENV PATH="/root/.local/bin:$PATH"
 ENV configs /thingsboard_gateway/config
 ENV extensions /thingsboard_gateway/extensions
 ENV logs /thingsboard_gateway/logs
-RUN python /setup.py --quiet install && mkdir -p /default-config/config /default-config/extensions/ && cp -r /thingsboard_gateway/config/* /default-config/config/ && cp -r /thingsboard_gateway/extensions/* /default-config/extensions
+RUN CFLAGS="-Wno-missing-braces" python /setup.py install && mkdir -p /default-config/config /default-config/extensions/ && cp -r /thingsboard_gateway/config/* /default-config/config/ && cp -r /thingsboard_gateway/extensions/* /default-config/extensions
 VOLUME ["${configs}", "${extensions}", "${logs}"]
 CMD [ "/bin/sh", "./start-gateway.sh" ]
