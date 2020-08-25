@@ -18,7 +18,7 @@ script:
   - docker buildx inspect --bootstrap
   - docker buildx ls
   - export REPO=octoate/thingsboard-gateway-multiplatform
-  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi
+  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi`
   - docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6 --tag $REPO:$COMMIT -f ./docker/Dockerfile .
   - docker tag $REPO:$COMMIT $REPO:$TAG
   - docker push $REPO
