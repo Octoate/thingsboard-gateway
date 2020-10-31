@@ -30,7 +30,7 @@ class TBClient(threading.Thread):
         self.__config = config
         self.__host = config["host"]
         self.__port = config.get("port", 1883)
-        self.__default_quality_of_service = config.get("qos",1)
+        self.__default_quality_of_service = config.get("qos", 1)
         credentials = config["security"]
         self.__min_reconnect_delay = 1
         self.__tls = bool(credentials.get('tls', False) or credentials.get('caCert', False))
@@ -116,7 +116,7 @@ class TBClient(threading.Thread):
         self.__min_reconnect_delay = min_reconnect_delay
 
     def run(self):
-        keep_alive = self.__config.get("keep_alive", 60)
+        keep_alive = self.__config.get("keep_alive", 120)
         try:
             while not self.client.is_connected() and not self.__stopped:
                 if not self.__paused:
@@ -138,7 +138,7 @@ class TBClient(threading.Thread):
         while not self.__stopped:
             try:
                 if not self.__stopped:
-                    time.sleep(1)
+                    time.sleep(.1)
                 else:
                     break
             except KeyboardInterrupt:

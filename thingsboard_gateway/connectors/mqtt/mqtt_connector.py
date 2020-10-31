@@ -235,6 +235,8 @@ class MqttConnector(Connector, Thread):
                              str(flags),
                              extra_params)
 
+            self.__mapping_sub_topics = {}
+
             # Setup data upload requests handling ----------------------------------------------------------------------
             for mapping in self.__mapping:
                 try:
@@ -262,7 +264,7 @@ class MqttConnector(Connector, Thread):
                     self.__mapping_sub_topics[regex_topic].append(converter)
 
                     # Subscribe to appropriate topic -------------------------------------------------------------------
-                    self.__subscribe(mapping["topicFilter"], mapping.get("subscriptionQos", 0))
+                    self.__subscribe(mapping["topicFilter"], mapping.get("subscriptionQos", 1))
 
                     self.__log.info('Connector "%s" subscribe to %s',
                                     self.get_name(),
@@ -274,21 +276,21 @@ class MqttConnector(Connector, Thread):
             # Setup connection requests handling -----------------------------------------------------------------------
             for request in [entry for entry in self.__connect_requests if entry is not None]:
                 # requests are guaranteed to have topicFilter field. See __init__
-                self.__subscribe(request["topicFilter"], request.get("subscriptionQos", 0))
+                self.__subscribe(request["topicFilter"], request.get("subscriptionQos", 1))
                 topic_filter = TBUtility.topic_to_regex(request.get("topicFilter"))
                 self.__connect_requests_sub_topics[topic_filter] = request
 
             # Setup disconnection requests handling --------------------------------------------------------------------
             for request in [entry for entry in self.__disconnect_requests if entry is not None]:
                 # requests are guaranteed to have topicFilter field. See __init__
-                self.__subscribe(request["topicFilter"], request.get("subscriptionQos", 0))
+                self.__subscribe(request["topicFilter"], request.get("subscriptionQos", 1))
                 topic_filter = TBUtility.topic_to_regex(request.get("topicFilter"))
                 self.__disconnect_requests_sub_topics[topic_filter] = request
 
             # Setup attributes requests handling -----------------------------------------------------------------------
             for request in [entry for entry in self.__attribute_requests if entry is not None]:
                 # requests are guaranteed to have topicFilter field. See __init__
-                self.__subscribe(request["topicFilter"], request.get("subscriptionQos", 0))
+                self.__subscribe(request["topicFilter"], request.get("subscriptionQos", 1))
                 topic_filter = TBUtility.topic_to_regex(request.get("topicFilter"))
                 self.__attribute_requests_sub_topics[topic_filter] = request
 
@@ -511,11 +513,11 @@ class MqttConnector(Connector, Thread):
         attribute_value = incoming_data.get("value")
 
         topic = topic_expression \
-            .replace("${deviceName}", device_name) \
-            .replace("${attributeKey}", attribute_name)
+            .replace("${deviceName}", str(device_name)) \
+            .replace("${attributeKey}", str(attribute_name))
 
-        data = value_expression.replace("${attributeKey}", attribute_name) \
-            .replace("${attributeValue}", attribute_value)
+        data = value_expression.replace("${attributeKey}", str(attribute_name)) \
+            .replace("${attributeValue}", str(attribute_value))
 
         self._client.publish(topic, data).wait_for_publish()
 
@@ -527,16 +529,16 @@ class MqttConnector(Connector, Thread):
                         if match(attribute_update["attributeFilter"], attribute_key):
                             try:
                                 topic = attribute_update["topicExpression"]\
-                                        .replace("${deviceName}", content["device"])\
-                                        .replace("${attributeKey}", attribute_key)\
-                                        .replace("${attributeValue}", content["data"][attribute_key])
+                                        .replace("${deviceName}", str(content["device"]))\
+                                        .replace("${attributeKey}", str(attribute_key))\
+                                        .replace("${attributeValue}", str(content["data"][attribute_key]))
                             except KeyError as e:
                                 log.exception("Cannot form topic, key %s - not found", e)
                                 raise e
                             try:
                                 data = attribute_update["valueExpression"]\
-                                        .replace("${attributeKey}", attribute_key)\
-                                        .replace("${attributeValue}", content["data"][attribute_key])
+                                        .replace("${attributeKey}", str(attribute_key))\
+                                        .replace("${attributeValue}", str(content["data"][attribute_key]))
                             except KeyError as e:
                                 log.exception("Cannot form topic, key %s - not found", e)
                                 raise e
@@ -556,8 +558,8 @@ class MqttConnector(Connector, Thread):
                 # Subscribe to RPC response topic
                 if rpc_config.get("responseTopicExpression"):
                     topic_for_subscribe = rpc_config["responseTopicExpression"] \
-                        .replace("${deviceName}", content["device"]) \
-                        .replace("${methodName}", content["data"]["method"]) \
+                        .replace("${deviceName}", str(content["device"])) \
+                        .replace("${methodName}", str(content["data"]["method"])) \
                         .replace("${requestId}", str(content["data"]["id"])) \
                         .replace("${params}", simplejson.dumps(content["data"].get("params", "")))
                     if rpc_config.get("responseTimeout"):
@@ -574,13 +576,13 @@ class MqttConnector(Connector, Thread):
                 if rpc_config.get("requestTopicExpression") is not None\
                         and rpc_config.get("valueExpression"):
                     topic = rpc_config.get("requestTopicExpression")\
-                        .replace("${deviceName}", content["device"])\
-                        .replace("${methodName}", content["data"]["method"])\
+                        .replace("${deviceName}", str(content["device"]))\
+                        .replace("${methodName}", str(content["data"]["method"]))\
                         .replace("${requestId}", str(content["data"]["id"]))\
                         .replace("${params}", simplejson.dumps(content["data"].get("params", "")))
                     data_to_send = rpc_config.get("valueExpression")\
-                        .replace("${deviceName}", content["device"])\
-                        .replace("${methodName}", content["data"]["method"])\
+                        .replace("${deviceName}", str(content["device"]))\
+                        .replace("${methodName}", str(content["data"]["method"]))\
                         .replace("${requestId}", str(content["data"]["id"]))\
                         .replace("${params}", simplejson.dumps(content["data"].get("params", "")))
                     try:
